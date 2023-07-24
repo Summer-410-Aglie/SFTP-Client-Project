@@ -62,9 +62,8 @@ class SFTPClient:
         """
         try:
             self.connection.remove(fileName)
-        except Exception as e: 
+        except Exception as e:
             print(str(e))
-            return False
+            return ValueError('Unable to remove file: ' + fileName)
 
         return True
-
