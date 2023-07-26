@@ -60,3 +60,6 @@ class SFTPClient:
         except Exception as e:
             print(str(e))
         pass
+    
+    def get_many_remote_files(self, src: list[str], dest: str = None) -> None:
+        pass

@@ -16,13 +16,13 @@ def login() -> SFTPClient:
     return SFTPClient(host_name=host, user_name=user, password=pwd)
 
 def get_directories_from_user() -> tuple[str]:
-    print("\nEnter the desired FULL paths AND file names:")
+    print("\nEnter the desired paths AND file names:")
     print("(Press ENTER/RETURN immediately if the current " + 
     	"working directory is desired.)\n")
-    src: str = path.normpath(input("Source path and file name: "))
-    dst: str = path.normpath(input("Destination path and file name: "))
+    src: str = input("Source path and file name: ")
+    dst: str = path.join(getcwd(), input("Destination path and file name: "))
     
-    return src, dst
+    return src, path.normpath(dst)
 
 
 
