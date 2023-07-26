@@ -53,3 +53,17 @@ class SFTPClient:
         
         return True
         pass
+
+    def renameRemote(self, src, dest):
+        """Rename the file or directory on a remote host
+        
+        :return: rename file or directory from remote server
+        :rtype: bool
+        """
+        try:
+            self.connection.rename(src, dest)
+        except Exception as e:
+            print(str(e))
+            return ValueError('Unable to rename file or directory: ' + dest + ' to: ' + src)
+        
+        return True
