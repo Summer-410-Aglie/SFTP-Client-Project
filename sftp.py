@@ -13,12 +13,13 @@ def login() -> SFTPClient:
     host: str = input("host: ")
     pwd = getpass("password: ")
     return SFTPClient(host_name=host, user_name=user, password=pwd)
-    pass
 
 
 
 
 if __name__=='__main__':
     client: SFTPClient = login()
-    client.connect()
-    client.close()
+    if client.connect():
+        client.get_remote_file("test.txt")
+        client.get_remote_file("test2.txt", "./test2.txt")
+        client.close()
