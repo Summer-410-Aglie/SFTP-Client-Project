@@ -54,6 +54,8 @@ class SFTPClient:
     
     def get_remote_file(self, src: str, dest: str = None) -> None:
         try:
+            src = self.connection.normalize(src)
+            if dest == ".":	dest = None
             self.connection.get(src, dest)
         except Exception as e:
             print(str(e))
