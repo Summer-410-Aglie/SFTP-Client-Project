@@ -1,4 +1,5 @@
 import pysftp
+import os 
 
 class SFTPClient:
     """ A wrapper class for SFTP Client
@@ -53,3 +54,14 @@ class SFTPClient:
         
         return True
         pass
+
+    def renameLocal(self, src, dest) -> bool:
+        """Rename the file or directory on the local server
+        """
+        try: 
+            os.rename(src, dest)
+        except FileNotFoundError as e:
+            print(str(e))
+            return FileNotFoundError(f"{src} does not exist")
+
+        return True
