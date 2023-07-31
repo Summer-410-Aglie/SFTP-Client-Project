@@ -64,6 +64,6 @@ class SFTPClient:
             self.connection.rename(src, dest)
         except Exception as e:
             print(str(e))
-            return ValueError('Unable to rename file or directory: ' + dest + ' to: ' + src)
+            return ValueError('Unable to rename file or directory: ' + src + ' to: ' + dest)
         
         return True
