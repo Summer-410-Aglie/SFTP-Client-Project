@@ -57,11 +57,13 @@ class SFTPClient:
 
     def renameLocal(self, src, dest) -> bool:
         """Rename the file or directory on the local server
+
+        :return: rename the file/directory or not
+        :rtype: bool
         """
         try: 
             os.rename(src, dest)
         except FileNotFoundError as e:
-            print(str(e))
             return FileNotFoundError(f"{src} does not exist")
 
         return True
