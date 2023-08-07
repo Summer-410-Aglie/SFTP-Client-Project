@@ -1,5 +1,6 @@
 import unittest
 from unittest.mock import MagicMock
+from unittest.mock import patch
 from src.sftp_client import SFTPClient
 import pysftp
 
@@ -12,6 +13,7 @@ class SFTPClientTest(unittest.TestCase):
         self.mock_connection = MagicMock()
         self.sftp_client.connection = self.mock_connection
         pass
+
 
     def test_RemoveRemoteFile_file_exist(self):
         file = 'file.txt'
@@ -28,6 +30,66 @@ class SFTPClientTest(unittest.TestCase):
 
         self.assertEqual(str(result), 'Unable to remove file: ' + file)
 
+    def test_RemoveRemoteDir_dir_exist(self):
+        dir = 'directory'
+        self.mock_connection.rmdir.return_value = None
+
+        result = self.sftp_client.removeRemoteDirectory(dir) 
+
+        self.assertTrue(result)    
+
+    def test_RemoveRemoteDir_dir_does_not_exist(self):
+        dir = 'directory_does_not_exist'
+        self.mock_connection.rmdir.side_effect = IOError('Unable to directory: ' + dir)
+        result = self.sftp_client.removeRemoteDirectory(dir) 
+
+        self.assertEqual(str(result), 'Unable to remove directory: ' + dir)
+        
+    def test_renameRemote_rename_success(self):
+        src_name = 'file_exist'
+        dest_name = 'new_test_name'
+
+        self.mock_connection.rename.return_value = None
+
+        result = self.sftp_client.renameRemote(src_name, dest_name)
+
+        self.assertTrue(result)
+
+    def test_renameRemote_error(self):
+        src_name = 'file_exist'
+        dest_name = 'new_test_name'
+
+        self.mock_connection.rename.side_effect = IOError('Unable to rename file or directory: ' + src_name + ' to: ' + dest_name)
+
+        result = self.sftp_client.renameRemote(src_name, dest_name)
+
+        self.assertEqual(str(result), 'Unable to rename file or directory: ' + src_name + ' to: ' + dest_name)    
+
+    def test_renameLocal_success(self):
+        src_name = 'file_name'
+        dest_name = 'new_file_name'
+
+        with patch('os.rename') as mock_rename:
+            
+            result = self.sftp_client.renameLocal(src_name, dest_name)
+            
+            self.assertTrue(result)
+
+            mock_rename.assert_called_once_with(src_name, dest_name)
+
+
+    def test_renameLocal_error(self):
+        src_name = 'file_name'
+        dest_name = 'new_file_name'
+
+        with patch('os.rename') as mock_rename:
+
+            mock_rename.side_effect = FileNotFoundError(f"{src_name} does not exist")
+
+            result = self.sftp_client.renameLocal(src_name, dest_name)
+
+            self.assertEqual(str(result), f"{src_name} does not exist")
+            mock_rename.assert_called_once_with(src_name, dest_name)
 
 if __name__ == "__main__":
     unittest.main()
