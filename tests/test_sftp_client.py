@@ -14,6 +14,22 @@ class SFTPClientTest(unittest.TestCase):
         self.sftp_client.connection = self.mock_connection
         pass
 
+
+    def test_RemoveRemoteFile_file_exist(self):
+        file = 'file.txt'
+        self.mock_connection.remove.return_value = None
+
+        result = self.sftp_client.removeRemoteFile(file) 
+
+        self.assertTrue(result)    
+
+    def test_RemoveRemoteFile_file_does_not_exist(self):
+        file = 'file_does_not_exist.txt'
+        self.mock_connection.remove.side_effect = IOError('Unable to remove file: ' + file)
+        result = self.sftp_client.removeRemoteFile(file) 
+
+        self.assertEqual(str(result), 'Unable to remove file: ' + file)
+
     def test_RemoveRemoteDir_dir_exist(self):
         dir = 'directory'
         self.mock_connection.rmdir.return_value = None
@@ -74,7 +90,6 @@ class SFTPClientTest(unittest.TestCase):
 
             self.assertEqual(str(result), f"{src_name} does not exist")
             mock_rename.assert_called_once_with(src_name, dest_name)
-
 
 if __name__ == "__main__":
     unittest.main()

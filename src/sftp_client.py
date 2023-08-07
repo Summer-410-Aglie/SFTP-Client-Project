@@ -66,6 +66,20 @@ class SFTPClient:
         return True
         pass
 
+    def removeRemoteFile(self, fileName: str) -> bool: 
+        """Remove the remote file
+
+        :return: remove file from remote server
+        :rtype: bool
+        """
+        try:
+            self.connection.remove(fileName)
+        except Exception as e:
+            print(str(e))
+            return ValueError('Unable to remove file: ' + fileName)
+
+        return True
+
     def removeRemoteDirectory(self, dirName: str) -> bool: 
         """Remove the remote directory
 
