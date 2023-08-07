@@ -14,6 +14,21 @@ class SFTPClientTest(unittest.TestCase):
         self.sftp_client.connection = self.mock_connection
         pass
 
+    def test_RemoveRemoteDir_dir_exist(self):
+        dir = 'directory'
+        self.mock_connection.rmdir.return_value = None
+
+        result = self.sftp_client.removeRemoteDirectory(dir) 
+
+        self.assertTrue(result)    
+
+    def test_RemoveRemoteDir_dir_does_not_exist(self):
+        dir = 'directory_does_not_exist'
+        self.mock_connection.rmdir.side_effect = IOError('Unable to directory: ' + dir)
+        result = self.sftp_client.removeRemoteDirectory(dir) 
+
+        self.assertEqual(str(result), 'Unable to remove directory: ' + dir)
+        
     def test_renameRemote_rename_success(self):
         src_name = 'file_exist'
         dest_name = 'new_test_name'

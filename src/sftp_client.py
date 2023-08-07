@@ -66,6 +66,19 @@ class SFTPClient:
         return True
         pass
 
+    def removeRemoteDirectory(self, dirName: str) -> bool: 
+        """Remove the remote directory
+
+        :return: remove directory from remote server
+        :rtype: bool
+        """
+        try:
+            self.connection.rmdir(dirName)
+        except Exception as e:
+            print(str(e))
+            return ValueError('Unable to remove directory: ' + dirName)
+
+        return True
 
     def renameRemote(self, src, dest):
         """Rename the file or directory on a remote host
