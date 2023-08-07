@@ -1,4 +1,5 @@
 import pysftp
+import os 
 from simple_term_menu import TerminalMenu
 
 
@@ -65,6 +66,18 @@ class SFTPClient:
         return True
         pass
 
+    def renameLocal(self, src, dest) -> bool:
+        """Rename the file or directory on the local server
+
+        :return: rename the file/directory or not
+        :rtype: bool
+        """
+        try: 
+            os.rename(src, dest)
+        except FileNotFoundError as e:
+            return FileNotFoundError(f"{src} does not exist")
+
+        return True
 
     def listCurrentDir(self) -> list:
         return self.connection.listdir()
