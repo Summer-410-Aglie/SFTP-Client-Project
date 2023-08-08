@@ -50,7 +50,6 @@ class SFTPClient:
             pass
         
         return True
-        pass
 
     def close(self) -> bool:
         """"Closes the established SFTP connection
@@ -64,6 +63,17 @@ class SFTPClient:
             return False
         
         return True
+    
+    def get_remote_file(self, src: str, dest: str = None) -> None:
+        try:
+            src = self.connection.normalize(src)
+            if dest == ".":	dest = None
+            self.connection.get(src, dest)
+        except Exception as e:
+            print(str(e))
+        pass
+    
+    def get_many_remote_files(self, src: list[str], dest: str = None) -> None:
         pass
 
     def removeRemoteFile(self, fileName: str) -> bool: 

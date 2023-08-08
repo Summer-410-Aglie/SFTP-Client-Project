@@ -1,4 +1,5 @@
 import sys
+from os import path, getcwd
 from getpass import getpass
 from src.sftp_client import SFTPClient
 from simple_term_menu import TerminalMenu
@@ -25,8 +26,15 @@ def login() -> SFTPClient:
         pass
 
     return SFTPClient(host_name=host, user_name=user, password=pwd)
-    pass
 
+def get_directories_from_user() -> tuple[str]:
+    print("\nEnter the desired paths AND file names:")
+    print("(Press ENTER/RETURN immediately if the current " + 
+    	"working directory is desired.)\n")
+    src: str = input("Source path and file name: ")
+    dst: str = path.join(getcwd(), input("Destination path and file name: "))
+    
+    return src, path.normpath(dst)
 def exampleListAccounts():
     login_1 = {
         "username":"user1",
@@ -91,11 +99,6 @@ def menu():
 
 
 if __name__=='__main__':
-    
-    # try:
-    #     int("not a number")
-    # except Exception as e:
-    #     # print(str(e))
-    #     pass
-    
-    menu()
+    client: SFTPClient = login()
+    client.connect()
+    client.close()
