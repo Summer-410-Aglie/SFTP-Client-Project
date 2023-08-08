@@ -99,6 +99,10 @@ def menu():
 
 
 if __name__=='__main__':
-    client: SFTPClient = login()
-    client.connect()
-    client.close()
+    # try:
+    #     int("not a number")
+    # except Exception as e:
+    #     # print(str(e))
+    #     pass
+
+    menu()
