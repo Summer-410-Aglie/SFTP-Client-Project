@@ -91,5 +91,53 @@ class SFTPClientTest(unittest.TestCase):
             self.assertEqual(str(result), f"{src_name} does not exist")
             mock_rename.assert_called_once_with(src_name, dest_name)
 
+    def test_removeLocalFile_success(self):
+        file_path = 'file_path'
+
+        with patch('os.remove') as mock_remove:
+
+            result = self.sftp_client.removeLocalFile(file_path)
+
+            self.assertTrue(result)
+
+            mock_remove.assert_called_once_with(file_path)
+
+    def test_removeLocalFile_error(self):
+        file_path = 'file_path'
+
+        with patch('os.remove') as mock_remove:
+
+            mock_remove.side_effect = OSError('Unable to remove: ' + file_path)
+
+            result = self.sftp_client.removeLocalFile(file_path)
+
+            self.assertEqual(str(result), 'Unable to remove: ' + file_path)
+
+            mock_remove.assert_called_once_with(file_path)
+
+    def test_removeLocalDirectory_success(self):
+        file_path = 'directory_path'
+
+        with patch('os.rmdir') as mock_rmdir:
+
+            result = self.sftp_client.removeLocalDirectory(file_path)
+
+            self.assertTrue(result)
+
+            mock_rmdir.assert_called_once_with(file_path)
+
+    def test_removeLocalDirectory_error(self):
+        file_path = 'directory_path'
+
+        with patch('os.rmdir') as mock_rmdir:
+
+            mock_rmdir.side_effect = OSError('Unable to remove directory: ' + file_path)
+
+            result = self.sftp_client.removeLocalDirectory(file_path)
+
+            self.assertEqual(str(result), 'Unable to remove directory: ' + file_path)
+
+            mock_rmdir.assert_called_once_with(file_path)
+
 if __name__ == "__main__":
     unittest.main()
