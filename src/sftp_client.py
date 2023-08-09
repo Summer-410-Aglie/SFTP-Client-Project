@@ -3,8 +3,8 @@ import os
 from simple_term_menu import TerminalMenu
 
 
-LIST_DIR: str =         '[1] List directories'
-CHANGE_DIR: str =       '[2] Change directories'
+LIST_DIR: str =         '[1] List remote directories'
+CHANGE_DIR: str =       '[2] Change remote directories'
 EXIT: str =             '[3] Exit'
 
 OPTIONS: str = [
@@ -130,13 +130,29 @@ class SFTPClient:
             return FileNotFoundError(f"{src} does not exist")
 
         return True
+    
+    def getCurrentDir(self) -> None:    
+        """Gets a list of contents in current directory
 
-    def listCurrentDir(self) -> list:
+        :return: file names
+        :rtype: list
+        """          
         return self.connection.listdir()
+
         pass
 
-    def changeDir(self):
-        current_dir = self.listCurrentDir()
+    def listCurrentDir(self) -> None:
+        """List all the current content of current directory
+        """      
+        for i in self.getCurrentDir():
+            print(i)
+        pass
+
+    def changeCurrentDir(self) -> None:
+        """Changes directory
+        """   
+        current_dir = self.getCurrentDir()
+        current_dir.append("..")
         current_dir.append("Quit")
         current_path: str = self.connection.pwd
         choosen_index = self.ChooseMenu(options=current_dir, title_name="Current path: " + current_path)
@@ -149,13 +165,21 @@ class SFTPClient:
 
 
     def ChooseMenu(self, options: list, title_name: str = "MENU") -> int:
+        """Allows you to choose from list of options
+
+        :param options: the data to display
+        :type options: list
+        :param title_name: the title you want to have for the menu, defaults to "MENU"
+        :type title_name: str, optional
+        :return: the choosen menu
+        :rtype: int
+        """        
         terminal_menu: TerminalMenu = TerminalMenu(
         menu_entries=options,
         title=title_name,
         )
         return terminal_menu.show()
         pass
-
 
     def mainMenu(self) -> None:
         """Menu for this class
@@ -166,12 +190,10 @@ class SFTPClient:
             index: int = self.ChooseMenu(OPTIONS, "User Name: "+ self.user_name+" Host: "+ str(self.host_name))
 
             if OPTIONS.index(LIST_DIR) == index:
-                print(self.listCurrentDir())  
-                for i in self.listCurrentDir():
-                    print(i)
+                self.listCurrentDir()
                 pass
             elif OPTIONS.index(CHANGE_DIR) == index:
-                self.changeDir()
+                self.changeCurrentDir()
                 pass
             elif OPTIONS.index(EXIT) == index:
                 return

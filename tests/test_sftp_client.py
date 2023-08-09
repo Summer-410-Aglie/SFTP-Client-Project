@@ -6,11 +6,12 @@ import pysftp
 
 class SFTPClientTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.host_name: str = "example.com"
-        self.user_name: str = "username"
-        self.password: str = "password"
+        self.host_name: str = "test_host"
+        self.user_name: str = "test_user"
+        self.password: str = "test_password"
         self.sftp_client: SFTPClient = SFTPClient(self.host_name, self.user_name, self.password)
         self.mock_connection = MagicMock()
+        self.mock_connection.listdir.return_value = ['dir1', 'dir2', 'file.txt']
         self.sftp_client.connection = self.mock_connection
         pass
 
@@ -90,6 +91,36 @@ class SFTPClientTest(unittest.TestCase):
 
             self.assertEqual(str(result), f"{src_name} does not exist")
             mock_rename.assert_called_once_with(src_name, dest_name)
+
+    def test_list_current_dir(self):
+        self.sftp_client.connection = self.mock_connection
+        self.assertEqual(self.sftp_client.getCurrentDir(), ['dir1', 'dir2', 'file.txt'])
+
+    def test_close_failure(self):
+        self.sftp_client.connection = MagicMock()
+        self.sftp_client.connection.close.side_effect = Exception("Connection Error")
+        self.assertFalse(self.sftp_client.close())
+
+    def test_close(self):
+        self.sftp_client.connection = self.mock_connection
+        self.assertTrue(self.sftp_client.close())
+
+    @patch('pysftp.Connection')
+    def test_connect_failure(self, mock_connection):
+        mock_connection.side_effect = Exception("Connection Error")
+        result = self.sftp_client.connect()
+        self.assertFalse(result)
+
+    @patch('pysftp.Connection')
+    def test_connect(self, mock_connection):
+        result = self.sftp_client.connect()
+        mock_connection.assert_called_with(host="test_host", username="test_user", password="test_password")
+        self.assertTrue(result)
+
+    @patch('simple_term_menu.TerminalMenu.show')
+    def test_choose_menu(self, mock_show):
+        mock_show.return_value = 1
+        self.assertEqual(self.sftp_client.ChooseMenu(['option1', 'option2']), 1)
 
 if __name__ == "__main__":
     unittest.main()
