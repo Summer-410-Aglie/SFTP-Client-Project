@@ -13,12 +13,16 @@ class SFTPClientTest(unittest.TestCase):
         self.mock_connection = MagicMock()
         self.sftp_client.connection = self.mock_connection
         pass
+    
+    def test_connect(self):
+        self.assertTrue(self.sftp_client.connect())
+        self.mock_connection.assert_called_with(host=self.host_name, username=self.user_name, password=self.password)
+        pass
 
     def test_getRemoteFile(self):
         self.sftp_client.getRemoteFile(".", ".")
         self.mock_connection.assert_called_with(self.sftp_client.connection.getcwd(), None)
         pass
-
 
     def test_RemoveRemoteFile_file_exist(self):
         file = 'file.txt'
