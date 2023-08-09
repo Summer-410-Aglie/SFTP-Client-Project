@@ -3,13 +3,19 @@ import os
 from simple_term_menu import TerminalMenu
 
 
-LIST_DIR: str =         '[1] List remote directories'
-CHANGE_DIR: str =       '[2] Change remote directories'
-EXIT: str =             '[3] Exit'
+LIST_DIR_REMOTE: str =              'List remote directories'
+LIST_DIR_LOCAL: str =               'List local directories'
+CHANGE_DIR_REMOTE: str =            'Change remote directories'
+CHANGE_DIR_LOCAL: str =             'Change local directories'
+EXIT: str =                         'Exit'
+QUIT: str =                         'Quit'
+RETURN: str =                       'Return'
 
 OPTIONS: str = [
-    LIST_DIR,
-    CHANGE_DIR,
+    LIST_DIR_REMOTE,
+    CHANGE_DIR_REMOTE,
+    LIST_DIR_LOCAL,
+    CHANGE_DIR_LOCAL,
     EXIT
     ]
 
@@ -35,6 +41,8 @@ class SFTPClient:
         self.host_name: str = host_name
         self.user_name: str = user_name
         self.password: str = password
+
+        self.local_path: str = '.'
         pass
 
     def connect(self) -> bool:
@@ -131,35 +139,74 @@ class SFTPClient:
 
         return True
     
-    def getCurrentDir(self) -> None:    
-        """Gets a list of contents in current directory
+    def getCurrentRemoteDir(self) -> list:    
+        """Gets a list of contents in current remote directory
 
-        :return: file names
+        :return: list of files/folder names
         :rtype: list
         """          
+        # return self.connection.listdir()
         return self.connection.listdir()
-
         pass
 
-    def listCurrentDir(self) -> None:
-        """List all the current content of current directory
+    def listCurrentRemoteDir(self) -> None:
+        """List all the current content of current remote directory
         """      
-        for i in self.getCurrentDir():
+        for i in self.getCurrentRemoteDir():
             print(i)
         pass
 
-    def changeCurrentDir(self) -> None:
-        """Changes directory
+    def changeCurrentRemoteDir(self) -> None:
+        """Changes remote directory
         """   
-        current_dir = self.getCurrentDir()
+        current_dir = self.getCurrentRemoteDir()
         current_dir.append("..")
-        current_dir.append("Quit")
+        current_dir.append(RETURN)
         current_path: str = self.connection.pwd
         choosen_index = self.ChooseMenu(options=current_dir, title_name="Current path: " + current_path)
-        if choosen_index == len(current_dir) -1:
-            return
-        self.connection.chdir(current_dir[choosen_index])
-        print(self.listCurrentDir())
+        choosen_dir: str = current_dir[choosen_index]
+        
+        if choosen_dir == RETURN:
+            return None
+        if self.connection.isdir(choosen_dir) or choosen_dir == "..":
+            self.connection.chdir(choosen_dir)
+        pass
+
+    def getCurrentLocalDir(self) -> list:
+        """Gets a list of contents in current local directory
+
+        :return: list of files/folder names
+        :rtype: list
+        """        
+        return os.listdir(self.local_path)
+        pass
+
+    def listCurrentLocalDir(self) -> None:
+        """List all the current content of current local directory
+        """ 
+        list_dir = self.getCurrentLocalDir()
+        for i in list_dir:
+            print(i)
+
+        pass
+
+    def changeCurrentLocalDir(self) -> None:
+        """Changes local directory
+        """
+        options = self.getCurrentLocalDir()
+        options.append("..")
+        options.append(RETURN)
+        choosen_index = self.ChooseMenu(options=options, title_name="Current Path: " + self.local_path)
+        
+        if options[choosen_index] == RETURN:
+            return None
+        
+        new_path = os.path.join(self.local_path, options[choosen_index])
+        
+        if os.path.isdir(new_path):
+            self.local_path = new_path
+
+        return
         pass
 
 
@@ -188,23 +235,24 @@ class SFTPClient:
 
         while not exit_flag:
             index: int = self.ChooseMenu(OPTIONS, "User Name: "+ self.user_name+" Host: "+ str(self.host_name))
+            entry = OPTIONS[index]
+            if entry == LIST_DIR_REMOTE:
+                self.listCurrentRemoteDir()
+                pass
+            elif entry == CHANGE_DIR_REMOTE:
+                self.changeCurrentRemoteDir()
+                pass
+            elif entry == LIST_DIR_LOCAL:
+                self.listCurrentLocalDir()
+            elif entry == CHANGE_DIR_LOCAL:
+                self.changeCurrentLocalDir()
 
-            if OPTIONS.index(LIST_DIR) == index:
-                self.listCurrentDir()
-                pass
-            elif OPTIONS.index(CHANGE_DIR) == index:
-                self.changeCurrentDir()
-                pass
-            elif OPTIONS.index(EXIT) == index:
+            elif entry == EXIT:
                 return
                 pass
 
             pass       
 
         pass
-
-
-    
-
 
     pass
