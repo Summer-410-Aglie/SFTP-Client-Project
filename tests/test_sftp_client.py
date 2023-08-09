@@ -14,6 +14,11 @@ class SFTPClientTest(unittest.TestCase):
         self.sftp_client.connection = self.mock_connection
         pass
 
+    def test_getRemoteFile(self):
+        self.sftp_client.getRemoteFile(".", ".")
+        self.mock_connection.assert_called_with(self.sftp_client.connection.getcwd(), None)
+        pass
+
 
     def test_RemoveRemoteFile_file_exist(self):
         file = 'file.txt'
