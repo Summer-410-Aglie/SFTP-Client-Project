@@ -84,6 +84,34 @@ class SFTPClient:
     def get_many_remote_files(self, src: list[str], dest: str = None) -> None:
         pass
 
+    def removeLocalFile(self, fileNamePath: str) -> bool:
+        """Remove the local file
+
+        :return: remove file from local server
+        :rtype: bool
+        """
+        try: 
+            os.remove(fileNamePath)
+        except OSError as e:
+            print(str(e))
+            return ValueError('Unable to remove: ' + fileNamePath)
+        
+        return True
+    
+    def removeLocalDirectory(self, directoryNamePath: str) -> bool:
+        """Remove the local directory. Directory must be empty
+
+        :return: remove directory from local server
+        :rtype: bool
+        """
+        try: 
+            os.rmdir(directoryNamePath)
+        except OSError as e:
+            print(str(e))
+            return ValueError('Unable to remove directory ' + directoryNamePath)
+        
+        return True
+    
     def removeRemoteFile(self, fileName: str) -> bool: 
         """Remove the remote file
 
@@ -97,6 +125,7 @@ class SFTPClient:
             return ValueError('Unable to remove file: ' + fileName)
 
         return True
+
 
     def removeRemoteDirectory(self, dirName: str) -> bool: 
         """Remove the remote directory

@@ -92,6 +92,54 @@ class SFTPClientTest(unittest.TestCase):
             self.assertEqual(str(result), f"{src_name} does not exist")
             mock_rename.assert_called_once_with(src_name, dest_name)
 
+    def test_removeLocalFile_success(self):
+        file_path = 'file_path'
+
+        with patch('os.remove') as mock_remove:
+
+            result = self.sftp_client.removeLocalFile(file_path)
+
+            self.assertTrue(result)
+
+            mock_remove.assert_called_once_with(file_path)
+
+    def test_removeLocalFile_error(self):
+        file_path = 'file_path'
+
+        with patch('os.remove') as mock_remove:
+
+            mock_remove.side_effect = OSError('Unable to remove: ' + file_path)
+
+            result = self.sftp_client.removeLocalFile(file_path)
+
+            self.assertEqual(str(result), 'Unable to remove: ' + file_path)
+
+            mock_remove.assert_called_once_with(file_path)
+
+    def test_removeLocalDirectory_success(self):
+        file_path = 'directory_path'
+
+        with patch('os.rmdir') as mock_rmdir:
+
+            result = self.sftp_client.removeLocalDirectory(file_path)
+
+            self.assertTrue(result)
+
+            mock_rmdir.assert_called_once_with(file_path)
+
+    def test_removeLocalDirectory_error(self):
+        file_path = 'directory_path'
+
+        with patch('os.rmdir') as mock_rmdir:
+
+            mock_rmdir.side_effect = OSError('Unable to remove directory: ' + file_path)
+
+            result = self.sftp_client.removeLocalDirectory(file_path)
+
+            self.assertEqual(str(result), 'Unable to remove directory: ' + file_path)
+
+            mock_rmdir.assert_called_once_with(file_path)
+
     def test_list_current_dir(self):
         self.sftp_client.connection = self.mock_connection
         self.assertEqual(self.sftp_client.getCurrentDir(), ['dir1', 'dir2', 'file.txt'])
@@ -121,6 +169,7 @@ class SFTPClientTest(unittest.TestCase):
     def test_choose_menu(self, mock_show):
         mock_show.return_value = 1
         self.assertEqual(self.sftp_client.ChooseMenu(['option1', 'option2']), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
