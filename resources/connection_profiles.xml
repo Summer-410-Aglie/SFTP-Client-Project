@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<root>
+	<login>
+		<username>user1</username>
+		<host>www.example.com</host>
+		<password>pAssWOrD!</password>
+	</login>
+	<login>
+		<username>user2</username>
+		<host>192.000.000.00</host>
+		<password>PassCode</password>
+	</login>
+</root>

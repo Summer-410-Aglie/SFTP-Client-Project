@@ -3,13 +3,19 @@ import os
 from simple_term_menu import TerminalMenu
 
 
-LIST_DIR: str =         '[1] List directories'
-CHANGE_DIR: str =       '[2] Change directories'
-EXIT: str =             '[3] Exit'
+LIST_DIR_REMOTE: str =              'List remote directories'
+LIST_DIR_LOCAL: str =               'List local directories'
+CHANGE_DIR_REMOTE: str =            'Change remote directories'
+CHANGE_DIR_LOCAL: str =             'Change local directories'
+EXIT: str =                         'Exit'
+QUIT: str =                         'Quit'
+RETURN: str =                       'Return'
 
 OPTIONS: str = [
-    LIST_DIR,
-    CHANGE_DIR,
+    LIST_DIR_REMOTE,
+    CHANGE_DIR_REMOTE,
+    LIST_DIR_LOCAL,
+    CHANGE_DIR_LOCAL,
     EXIT
     ]
 
@@ -35,6 +41,8 @@ class SFTPClient:
         self.host_name: str = host_name
         self.user_name: str = user_name
         self.password: str = password
+
+        self.local_path: str = '.'
         pass
 
     def connect(self) -> bool:
@@ -50,7 +58,6 @@ class SFTPClient:
             pass
         
         return True
-        pass
 
     def close(self) -> bool:
         """"Closes the established SFTP connection
@@ -64,6 +71,17 @@ class SFTPClient:
             return False
         
         return True
+    
+    def get_remote_file(self, src: str, dest: str = None) -> None:
+        try:
+            src = self.connection.normalize(src)
+            if dest == ".":	dest = None
+            self.connection.get(src, dest)
+        except Exception as e:
+            print(str(e))
+        pass
+    
+    def get_many_remote_files(self, src: list[str], dest: str = None) -> None:
         pass
 
     def removeLocalFile(self, fileNamePath: str) -> bool:
@@ -149,32 +167,95 @@ class SFTPClient:
             return FileNotFoundError(f"{src} does not exist")
 
         return True
+    
+    def getCurrentRemoteDir(self) -> list:    
+        """Gets a list of contents in current remote directory
 
-    def listCurrentDir(self) -> list:
+        :return: list of files/folder names
+        :rtype: list
+        """          
+        # return self.connection.listdir()
         return self.connection.listdir()
         pass
 
-    def changeDir(self):
-        current_dir = self.listCurrentDir()
-        current_dir.append("Quit")
+    def listCurrentRemoteDir(self) -> None:
+        """List all the current content of current remote directory
+        """      
+        for i in self.getCurrentRemoteDir():
+            print(i)
+        pass
+
+    def changeCurrentRemoteDir(self) -> None:
+        """Changes remote directory
+        """   
+        current_dir = self.getCurrentRemoteDir()
+        current_dir.append("..")
+        current_dir.append(RETURN)
         current_path: str = self.connection.pwd
         choosen_index = self.ChooseMenu(options=current_dir, title_name="Current path: " + current_path)
-        if choosen_index == len(current_dir) -1:
-            return
-        self.connection.chdir(current_dir[choosen_index])
-        print(self.listCurrentDir())
+        choosen_dir: str = current_dir[choosen_index]
+        
+        if choosen_dir == RETURN:
+            return None
+        if self.connection.isdir(choosen_dir) or choosen_dir == "..":
+            self.connection.chdir(choosen_dir)
+        pass
+
+    def getCurrentLocalDir(self) -> list:
+        """Gets a list of contents in current local directory
+
+        :return: list of files/folder names
+        :rtype: list
+        """        
+        return os.listdir(self.local_path)
+        pass
+
+    def listCurrentLocalDir(self) -> None:
+        """List all the current content of current local directory
+        """ 
+        list_dir = self.getCurrentLocalDir()
+        for i in list_dir:
+            print(i)
+
+        pass
+
+    def changeCurrentLocalDir(self) -> None:
+        """Changes local directory
+        """
+        options = self.getCurrentLocalDir()
+        options.append("..")
+        options.append(RETURN)
+        choosen_index = self.ChooseMenu(options=options, title_name="Current Path: " + self.local_path)
+        
+        if options[choosen_index] == RETURN:
+            return None
+        
+        new_path = os.path.join(self.local_path, options[choosen_index])
+        
+        if os.path.isdir(new_path):
+            self.local_path = new_path
+
+        return
         pass
 
 
 
     def ChooseMenu(self, options: list, title_name: str = "MENU") -> int:
+        """Allows you to choose from list of options
+
+        :param options: the data to display
+        :type options: list
+        :param title_name: the title you want to have for the menu, defaults to "MENU"
+        :type title_name: str, optional
+        :return: the choosen menu
+        :rtype: int
+        """        
         terminal_menu: TerminalMenu = TerminalMenu(
         menu_entries=options,
         title=title_name,
         )
         return terminal_menu.show()
         pass
-
 
     def mainMenu(self) -> None:
         """Menu for this class
@@ -183,25 +264,24 @@ class SFTPClient:
 
         while not exit_flag:
             index: int = self.ChooseMenu(OPTIONS, "User Name: "+ self.user_name+" Host: "+ str(self.host_name))
+            entry = OPTIONS[index]
+            if entry == LIST_DIR_REMOTE:
+                self.listCurrentRemoteDir()
+                pass
+            elif entry == CHANGE_DIR_REMOTE:
+                self.changeCurrentRemoteDir()
+                pass
+            elif entry == LIST_DIR_LOCAL:
+                self.listCurrentLocalDir()
+            elif entry == CHANGE_DIR_LOCAL:
+                self.changeCurrentLocalDir()
 
-            if OPTIONS.index(LIST_DIR) == index:
-                print(self.listCurrentDir())  
-                for i in self.listCurrentDir():
-                    print(i)
-                pass
-            elif OPTIONS.index(CHANGE_DIR) == index:
-                self.changeDir()
-                pass
-            elif OPTIONS.index(EXIT) == index:
+            elif entry == EXIT:
                 return
                 pass
 
             pass       
 
         pass
-
-
-    
-
 
     pass
