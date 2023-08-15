@@ -2,13 +2,16 @@ import sys
 from os import path, getcwd
 from getpass import getpass
 from src.sftp_client import SFTPClient
+from src.LoginInfoManager import LoginInfoManager
 from simple_term_menu import TerminalMenu
 
 
 LOGIN: str =        'Login'
 PICK_SAVED: str =   'Pick from saved account'
+DEL_SAVED: str =    'Delete a saved account'
 EXIT: str =         'Exit'
-
+QUIT: str =         'Quit'
+RETURN: str =       'Return'
 
 def login() -> SFTPClient:
     """Collects user input for host, username, and password and creates an SFTPClient
@@ -21,11 +24,19 @@ def login() -> SFTPClient:
     pwd = getpass("password: ")
 
     response = input("Would you like to save the login information? [y/n]: ")
+    if len(response) < 1:
+        response = 'n'
     if response[0] == 'Y' or response == 'y':
-        print("your login information have been saved!")        
+        manager = LoginInfoManager()
+        result = manager.addLoginInfo(user_name=user, host=host, password=pwd)
+        if result == True:
+            print("your login information have been saved!")
+        else:
+            print("This login already exist.")        
         pass
 
     return SFTPClient(host_name=host, user_name=user, password=pwd)
+    pass
 
 def get_directories_from_user() -> tuple[str]:
     print("\nEnter the desired paths AND file names:")
@@ -35,41 +46,77 @@ def get_directories_from_user() -> tuple[str]:
     dst: str = path.join(getcwd(), input("Destination path and file name: "))
     
     return src, path.normpath(dst)
-def exampleListAccounts():
-    login_1 = {
-        "username":"user1",
-        "host":"www.example.com",
-        "password":"pAssWOrD!"
-    }
-    
-    login_2 = {
-        "username":"user2",
-        "host":"192.000.000.00",
-        "password":"PassCode"
-    }
 
-    login_3 = {
-        "username":"user3",
-        "host":"linux.cs.pdx.edu",
-        "password":"passWORD"
-    }
+def pickFromSaved() -> dict:
+    """Allows you to pick from saved connections/account
 
-    options = [str(login_1), str(login_2), str(login_3), "Quit"]
-    terminal_menu: TerminalMenu = TerminalMenu(
+    :return: picked connection/account
+    :rtype: dict
+    """    
+    manager = LoginInfoManager()
+    all_login = manager.getAllLoginInfo()
+    options = list()
+    for i in all_login:
+        options.append(str(i))
+    options.append(RETURN) # allows you to exit
+
+    terminal_menu = TerminalMenu(
         menu_entries=options,
-        title="Saved login info"
-        )
+        title="Saved login Info"
+    )
     menu_entry_index = terminal_menu.show()
 
+    if options[menu_entry_index] == RETURN:
+        return None
+    else:
+        choosen_login: dict = all_login[menu_entry_index]
+        client: SFTPClient = SFTPClient( 
+            host_name=choosen_login.get('host'),
+            user_name=choosen_login.get('username'),
+            password=choosen_login.get('password')
+        )
+        return client
 
+    pass
 
+def deleteFromSaved() -> None:
+    """Allows you to delete from saved connections/account
+    """    
+    manager = LoginInfoManager()
+    all_login = manager.getAllLoginInfo()
+    options = list()
+    for i in all_login:
+        options.append(str(i))
+    options.append(RETURN) # allows you to return
+
+    terminal_menu = TerminalMenu(
+        menu_entries=options,
+        title="Saved login Info"
+    )
+    menu_entry_index = terminal_menu.show()
+
+    if options[menu_entry_index] == RETURN:
+        return None
+    else:
+        choosen_login: dict = all_login[menu_entry_index]
+        result = manager.deleteLoginInfo(choosen_login)
+        if result == True:
+            print("Selected account has been deleted!")
+        else:
+            print("Selected account has not been deleted!")
+    return None
     pass
 
 
 
-def menu():
-    options = [LOGIN, PICK_SAVED, EXIT]
-    terminal_menu: TerminalMenu = TerminalMenu(
+def menu() -> None:
+    """menu interface login
+    """    
+    options = [LOGIN, 
+               PICK_SAVED,
+               DEL_SAVED, 
+               EXIT]
+    terminal_menu: TerminalMenu = TerminalMenu(  #Menu Window
         menu_entries=options,
         title="MAIN MENU"
         )
@@ -86,8 +133,17 @@ def menu():
                 client.mainMenu()
                 client.close()
         elif menu_entry == PICK_SAVED:
-            exampleListAccounts()
+            client: SFTPClient = pickFromSaved()
+            if client != None:
+                result = client.connect()
+                if result == False:
+                    print("LOGIN FAILED!, please try again.")
+                else:
+                    client.mainMenu()
+                    client.close()
             pass
+        elif menu_entry == DEL_SAVED:
+            deleteFromSaved()
         elif menu_entry == EXIT:
             exit_flag = True
             pass
@@ -99,10 +155,4 @@ def menu():
 
 
 if __name__=='__main__':
-    # try:
-    #     int("not a number")
-    # except Exception as e:
-    #     # print(str(e))
-    #     pass
-
     menu()
