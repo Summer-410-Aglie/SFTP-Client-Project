@@ -17,8 +17,7 @@ RENAME_REMOTE: str =                'Rename file or directory'
 GET_FILE_REMOTE: str =				'Get remote file(s)'
 CREATE_DIR_REMOTE: str =            'Create remote directory'
 CREATE_DIR_LOCAL: str =             'Create local directory'
-CURRENT_REMOTE_PATH: str =          'Output current remote path'
-CURRENT_LOCAL_PATH: str =           'Output current local path'
+CURRENT_PATH: str =                 'Output current path'
 EXIT: str =                         'Exit'
 QUIT: str =                         'Quit'
 RETURN: str =                       'Return'
@@ -36,8 +35,7 @@ OPTIONS: str = [
     GET_FILE_REMOTE,
     CREATE_DIR_REMOTE,
     CREATE_DIR_LOCAL,
-    CURRENT_REMOTE_PATH,
-    CURRENT_LOCAL_PATH,
+    CURRENT_PATH,
     EXIT
     ]
 
@@ -487,10 +485,9 @@ class SFTPClient:
                 self.createRemoteDirectory()
             elif entry == CREATE_DIR_LOCAL:
                 self.createLocalDirectory()
-            elif entry == CURRENT_REMOTE_PATH:
-                print('Your current remote path is: ' + self.getCurrentRemotePath())
-            elif entry == CURRENT_LOCAL_PATH:
-                print('Your current local path is: ' + self.getCurrentLocalPath())
+            elif entry == CURRENT_PATH:
+                print('\nYour current remote path is: ' + self.getCurrentRemotePath() + '\n')
+                print('\nYour current local path is: ' + self.getCurrentLocalPath() + '\n')
             elif entry == EXIT:
                 return
 
