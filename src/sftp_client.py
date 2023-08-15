@@ -64,22 +64,24 @@ class SFTPClient:
         
         return True
     
-    def getRemoteFile(self, src: str, dest: str = None) -> None:
+    def getRemoteFile(self, src: str, dest: str = None) -> bool:
         try:
             src = self.connection.normalize(src)
             if dest == ".":	dest = None
             self.connection.get(src, dest)
+            return True
         except Exception as e:
             print(str(e))
-        pass
+            return False
     
-    def getManyRemoteFiles(self, src: list[str], dest: str = None) -> None:
+    def getManyRemoteFiles(self, src: list[str], dest: str = None) -> bool:
         try:
             for file, index in enumerate(src):
                 self.getRemoteFile(file, dest)
+            return True
         except Exception as e:
-            print(str(e), f"Get failed on file index number {index}")
-        pass
+            print(str(e), f"Failed to get file index number {index}")
+            return False
 
     def removeRemoteFile(self, fileName: str) -> bool: 
         """Remove the remote file
