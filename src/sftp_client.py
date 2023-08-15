@@ -2,20 +2,29 @@ import pysftp
 import os 
 from simple_term_menu import TerminalMenu
 
+FORWARD_SLASH: str =                '/'
 
 LIST_DIR_REMOTE: str =              'List remote directories'
+LIST_FILE_REMOTE: str =             'List remote files'
 LIST_DIR_LOCAL: str =               'List local directories'
 CHANGE_DIR_REMOTE: str =            'Change remote directories'
 CHANGE_DIR_LOCAL: str =             'Change local directories'
+REMOVE_DIR_REMOTE: str =            'Remove remote directories'
+RENAME_REMOTE: str =                'Rename file or directory'
+CURRENT_REMOTE_PATH: str =          'Output current remote path'
 EXIT: str =                         'Exit'
 QUIT: str =                         'Quit'
 RETURN: str =                       'Return'
 
 OPTIONS: str = [
     LIST_DIR_REMOTE,
+    LIST_FILE_REMOTE,
     CHANGE_DIR_REMOTE,
     LIST_DIR_LOCAL,
     CHANGE_DIR_LOCAL,
+    REMOVE_DIR_REMOTE,
+    RENAME_REMOTE,
+    CURRENT_REMOTE_PATH,
     EXIT
     ]
 
@@ -112,6 +121,12 @@ class SFTPClient:
         
         return True
     
+    def removeRemoteFileWrapper(self) -> bool:
+        self.listCurrentRemoteDir(includeFile=True)
+        src = input('what file would you like to remove? ')
+        srcPath = self.getCurrentRemotePath() + FORWARD_SLASH + src
+        return self.removeRemoteFile(srcPath)
+    
     def removeRemoteFile(self, fileName: str) -> bool: 
         """Remove the remote file
 
@@ -126,7 +141,12 @@ class SFTPClient:
 
         return True
 
-
+    def removeRemoteDirectoryWrapper(self) -> bool:
+        self.listCurrentRemoteDir(includeFile=False)
+        src = input('what directory would you like to remove? ')
+        srcPath = self.getCurrentRemotePath() + FORWARD_SLASH + src
+        return self.removeRemoteDirectory(srcPath)
+    
     def removeRemoteDirectory(self, dirName: str) -> bool: 
         """Remove the remote directory
 
@@ -141,6 +161,19 @@ class SFTPClient:
 
         return True
 
+    def renameRemoteWrapper(self) -> bool: 
+        """Rename the file or directory on a remote host (WRAPPER)
+        """
+        self.listCurrentRemoteDir(includeFile=True)
+        self.listCurrentRemoteDir(includeFile=False)
+        src = input('what file or directory would you like to rename?')
+        dest = input('What would you like to rename to?')
+        srcPath = self.getCurrentRemotePath() + '/' + src
+        destPath = self.getCurrentRemotePath() + '/' + dest
+        self.renameRemote(srcPath, destPath)
+        print('changing from: ' + srcPath + ' to ' + destPath)
+        return True
+    
     def renameRemote(self, src, dest):
         """Rename the file or directory on a remote host
         
@@ -178,11 +211,19 @@ class SFTPClient:
         return self.connection.listdir()
         pass
 
-    def listCurrentRemoteDir(self) -> None:
+    def listCurrentRemoteDir(self, includeFile) -> None:
         """List all the current content of current remote directory
-        """      
-        for i in self.getCurrentRemoteDir():
-            print(i)
+        """
+        if includeFile == True: 
+            for i in self.getCurrentRemoteDir():
+                path = self.getCurrentRemotePath() + FORWARD_SLASH + i
+                if self.connection.isfile(path) == True:
+                    print(i)
+        elif includeFile == False:      
+            for i in self.getCurrentRemoteDir():
+                path = self.getCurrentRemotePath() + FORWARD_SLASH + i
+                if self.connection.isfile(path) == False:
+                    print(i)
         pass
 
     def changeCurrentRemoteDir(self) -> None:
@@ -238,6 +279,10 @@ class SFTPClient:
         return
         pass
 
+    def getCurrentRemotePath(self) -> str: 
+        """Get current remote path
+        """
+        return self.connection.pwd
 
 
     def ChooseMenu(self, options: list, title_name: str = "MENU") -> int:
@@ -266,8 +311,10 @@ class SFTPClient:
             index: int = self.ChooseMenu(OPTIONS, "User Name: "+ self.user_name+" Host: "+ str(self.host_name))
             entry = OPTIONS[index]
             if entry == LIST_DIR_REMOTE:
-                self.listCurrentRemoteDir()
+                self.listCurrentRemoteDir(includeFile=False)
                 pass
+            elif entry == LIST_FILE_REMOTE:
+                self.listCurrentRemoteDir(includeFile=True)
             elif entry == CHANGE_DIR_REMOTE:
                 self.changeCurrentRemoteDir()
                 pass
@@ -275,7 +322,12 @@ class SFTPClient:
                 self.listCurrentLocalDir()
             elif entry == CHANGE_DIR_LOCAL:
                 self.changeCurrentLocalDir()
-
+            elif entry == REMOVE_DIR_REMOTE:
+                self.removeRemoteDirectoryWrapper()
+            elif entry == RENAME_REMOTE: 
+                self.renameRemoteWrapper()
+            elif entry == CURRENT_REMOTE_PATH:
+                print('Your current remote path is:' + self.getCurrentRemotePath())
             elif entry == EXIT:
                 return
                 pass
