@@ -150,6 +150,23 @@ class SFTPClientTest(unittest.TestCase):
 
             mock_rmdir.assert_called_once_with(file_path)
 
+    def test_putRemote_success(self):
+        file = 'file.txt'
+
+        result = self.sftp_client.putRemote(self,file)
+
+        self.assertTrue(result)    
+
+    def test_putRemote_error(self):
+        file = 'fileerror.txt'
+        temp = self.password
+        self.password = "intentionalerror"
+        self.mock_connection.remove.side_effect = IOError('Unable to upload file: ' + file)
+        result = self.sftp_client.putRemote(self,file) 
+        self.password = temp
+
+        self.assertEqual(str(result), 'Unable to upload file: ' + file)
+
     def test_list_current_dir(self):
         self.sftp_client.connection = self.mock_connection
         self.assertEqual(self.sftp_client.getCurrentDir(), ['dir1', 'dir2', 'file.txt'])
