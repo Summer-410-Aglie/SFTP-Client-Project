@@ -433,6 +433,19 @@ class SFTPClient:
         """Get current local path
         """
         return os.getcwd()
+    
+    def putRemote(self, fileName: str) -> bool:
+        """Put file to remote Server
+        """ 
+        
+        current_dir = self.getCurrentRemoteDir()
+        try:
+                self.connection.put(str,current_dir)
+        except Exception as e:
+            print(str(e))
+            return ValueError('Unable to upload file. ')
+
+        return True
 
     def ChooseMenu(self, options: list, title_name: str = "MENU") -> int:
         """Allows you to choose from list of options
