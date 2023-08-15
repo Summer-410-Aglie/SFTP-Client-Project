@@ -380,7 +380,6 @@ class SFTPClient:
                 print('Your current remote path is:' + self.getCurrentRemotePath())
             elif entry == EXIT:
                 return
-                pass
 
             pass       
 
