@@ -1,5 +1,4 @@
 import sys
-from os import path, getcwd
 from getpass import getpass
 from src.sftp_client import SFTPClient
 from src.LoginInfoManager import LoginInfoManager
@@ -36,16 +35,6 @@ def login() -> SFTPClient:
         pass
 
     return SFTPClient(host_name=host, user_name=user, password=pwd)
-    pass
-
-def get_directories_from_user() -> tuple[str]:
-    print("\nEnter the desired paths AND file names:")
-    print("(Press ENTER/RETURN immediately if the current " + 
-    	"working directory is desired.)\n")
-    src: str = input("Source path and file name: ")
-    dst: str = path.join(getcwd(), input("Destination path and file name: "))
-    
-    return src, path.normpath(dst)
 
 def pickFromSaved() -> dict:
     """Allows you to pick from saved connections/account
@@ -77,8 +66,6 @@ def pickFromSaved() -> dict:
         )
         return client
 
-    pass
-
 def deleteFromSaved() -> None:
     """Allows you to delete from saved connections/account
     """    
@@ -105,8 +92,6 @@ def deleteFromSaved() -> None:
         else:
             print("Selected account has not been deleted!")
     return None
-    pass
-
 
 
 def menu() -> None:

@@ -13,6 +13,8 @@ REMOVE_LOCAL: str =                 'Remove local files or directories'
 REMOVE_DIR_REMOTE: str =            'Remove remote directories'
 REMOVE_FILE_REMOTE: str =           'Remove remote files'
 RENAME_REMOTE: str =                'Rename remote file or directory'
+RENAME_REMOTE: str =                'Rename file or directory'
+GET_FILE_REMOTE: str =				'Get remote file(s)'
 CURRENT_REMOTE_PATH: str =          'Output current remote path'
 CURRENT_LOCAL_PATH: str =           'Output current local path'
 EXIT: str =                         'Exit'
@@ -29,6 +31,7 @@ OPTIONS: str = [
     REMOVE_DIR_REMOTE,
     REMOVE_FILE_REMOTE,
     RENAME_REMOTE,
+    GET_FILE_REMOTE,
     CURRENT_REMOTE_PATH,
     CURRENT_LOCAL_PATH,
     EXIT
@@ -87,17 +90,63 @@ class SFTPClient:
         
         return True
     
-    def get_remote_file(self, src: str, dest: str = None) -> None:
+    def getRemoteWrapper(self) -> bool:
+        self.listCurrentRemoteDir(includeFile=True)
+        numFiles = int(input("How many files would you like to get?: "))
+        srcs = []
+        for i in range(numFiles):
+            srcs.append(input(f'Which file would you like to get? ({i+1} of {numFiles}): '))
+            
+        srcPaths = [(self.getCurrentRemotePath() + FORWARD_SLASH + s) for s in srcs]
+        
+        return self.getManyRemoteFiles(srcPaths)
+
+    def getRemoteFile(self, src: str, dest: str = None) -> bool:
         try:
             src = self.connection.normalize(src)
             if dest == ".":	dest = None
             self.connection.get(src, dest)
+            return True
         except Exception as e:
             print(str(e))
-        pass
+            return False
     
-    def get_many_remote_files(self, src: list[str], dest: str = None) -> None:
-        pass
+    def getManyRemoteFiles(self, src: list[str], dest: str = None) -> bool:
+        try:
+            for index, file in enumerate(src):
+                self.getRemoteFile(file, dest)
+            return True
+        except Exception as e:
+            print(str(e), f"Failed to get file index number {index}")
+            return False
+
+    def removeLocalFile(self, fileNamePath: str) -> bool:
+        """Remove the local file
+
+        :return: remove file from local server
+        :rtype: bool
+        """
+        try: 
+            os.remove(fileNamePath)
+        except OSError as e:
+            print(str(e))
+            return ValueError('Unable to remove: ' + fileNamePath)
+        
+        return True
+    
+    def removeLocalDirectory(self, directoryNamePath: str) -> bool:
+        """Remove the local directory. Directory must be empty
+
+        :return: remove directory from local server
+        :rtype: bool
+        """
+        try: 
+            os.rmdir(directoryNamePath)
+        except OSError as e:
+            print(str(e))
+            return ValueError('Unable to remove directory ' + directoryNamePath)
+        
+        return True
 
     def removeLocalFileOrDir(self) -> bool:
         current_dir = self.getCurrentLocalDir()
@@ -360,13 +409,14 @@ class SFTPClient:
                 self.removeRemoteFileWrapper()
             elif entry == RENAME_REMOTE: 
                 self.renameRemoteWrapper()
+            elif entry == GET_FILE_REMOTE:
+                self.getRemoteWrapper()
             elif entry == CURRENT_REMOTE_PATH:
                 print('Your current remote path is: ' + self.getCurrentRemotePath())
             elif entry == CURRENT_LOCAL_PATH:
                 print('Your current local path is: ' + self.getCurrentLocalPath())
             elif entry == EXIT:
                 return
-                pass
 
             pass       
 

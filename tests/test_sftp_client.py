@@ -15,6 +15,16 @@ class SFTPClientTest(unittest.TestCase):
         self.sftp_client.connection = self.mock_connection
         pass
 
+    def test_getRemoteFile_success(self):
+        file_path = "path/to/file.txt"
+        self.mock_connection.get.return_value = None
+        
+        result = self.sftp_client.getRemoteFile(file_path, ".")
+        self.assertTrue(result)
+        
+        self.mock_connection.get.side_effect = IOError("IOError")
+        result = self.sftp_client.getRemoteFile(file_path, ".")
+        self.assertFalse(result)
 
     def test_RemoveRemoteFile_file_exist(self):
         file = 'file.txt'
