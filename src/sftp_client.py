@@ -11,6 +11,7 @@ CHANGE_DIR_REMOTE: str =            'Change remote directories'
 CHANGE_DIR_LOCAL: str =             'Change local directories'
 REMOVE_DIR_REMOTE: str =            'Remove remote directories'
 RENAME_REMOTE: str =                'Rename file or directory'
+GET_FILE_REMOTE: str =				'Get remote file(s)'
 CURRENT_REMOTE_PATH: str =          'Output current remote path'
 EXIT: str =                         'Exit'
 QUIT: str =                         'Quit'
@@ -24,6 +25,7 @@ OPTIONS: str = [
     CHANGE_DIR_LOCAL,
     REMOVE_DIR_REMOTE,
     RENAME_REMOTE,
+    GET_FILE_REMOTE,
     CURRENT_REMOTE_PATH,
     EXIT
     ]
@@ -81,6 +83,17 @@ class SFTPClient:
         
         return True
     
+    def getRemoteWrapper(self) -> bool:
+        self.listCurrentRemoteDir(includeFile=True)
+        numFiles = int(input("How many files would you like to get?: "))
+        srcs = []
+        for i in range(numFiles):
+            srcs.append(input(f'Which file would you like to get? ({i+1} of {numFiles}): '))
+            
+        srcPaths = [(self.getCurrentRemotePath() + FORWARD_SLASH + s) for s in srcs]
+        
+        return self.getManyRemoteFiles(srcPaths)
+
     def getRemoteFile(self, src: str, dest: str = None) -> bool:
         try:
             src = self.connection.normalize(src)
@@ -93,7 +106,7 @@ class SFTPClient:
     
     def getManyRemoteFiles(self, src: list[str], dest: str = None) -> bool:
         try:
-            for file, index in enumerate(src):
+            for index, file in enumerate(src):
                 self.getRemoteFile(file, dest)
             return True
         except Exception as e:
@@ -127,9 +140,6 @@ class SFTPClient:
             return ValueError('Unable to remove directory ' + directoryNamePath)
         
         return True
-    
-    def get_many_remote_files(self, src: list[str], dest: str = None) -> None:
-        pass
 
     def removeLocalFile(self, fileNamePath: str) -> bool:
         """Remove the local file
@@ -364,6 +374,8 @@ class SFTPClient:
                 self.removeRemoteDirectoryWrapper()
             elif entry == RENAME_REMOTE: 
                 self.renameRemoteWrapper()
+            elif entry == GET_FILE_REMOTE:
+                self.getRemoteWrapper()
             elif entry == CURRENT_REMOTE_PATH:
                 print('Your current remote path is:' + self.getCurrentRemotePath())
             elif entry == EXIT:
