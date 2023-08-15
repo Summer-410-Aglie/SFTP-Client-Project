@@ -15,6 +15,8 @@ REMOVE_FILE_REMOTE: str =           'Remove remote files'
 RENAME_REMOTE: str =                'Rename remote file or directory'
 RENAME_REMOTE: str =                'Rename file or directory'
 GET_FILE_REMOTE: str =				'Get remote file(s)'
+CREATE_DIR_REMOTE: str =            'Create remote directory'
+CREATE_DIR_LOCAL: str =             'Create local directory'
 CURRENT_REMOTE_PATH: str =          'Output current remote path'
 CURRENT_LOCAL_PATH: str =           'Output current local path'
 EXIT: str =                         'Exit'
@@ -32,6 +34,8 @@ OPTIONS: str = [
     REMOVE_FILE_REMOTE,
     RENAME_REMOTE,
     GET_FILE_REMOTE,
+    CREATE_DIR_REMOTE,
+    CREATE_DIR_LOCAL,
     CURRENT_REMOTE_PATH,
     CURRENT_LOCAL_PATH,
     EXIT
@@ -193,9 +197,12 @@ class SFTPClient:
         return True
     
     def removeRemoteFileWrapper(self) -> bool:
-        self.listCurrentRemoteDir(includeFile=True)
-        src = input('what file would you like to remove? ')
-        srcPath = self.getCurrentRemotePath() + FORWARD_SLASH + src
+        options = self.getCurrentRemoteDir()
+        options.append(RETURN)
+        index = self.ChooseMenu(options, "Removing remote file/directory")
+        choosen = options[index]
+        if choosen == RETURN: return False
+        srcPath = self.getCurrentRemotePath() + FORWARD_SLASH + choosen
         return self.removeRemoteFile(srcPath)
      
     def removeRemoteFile(self, fileName: str) -> bool: 
@@ -213,9 +220,13 @@ class SFTPClient:
         return True
 
     def removeRemoteDirectoryWrapper(self) -> bool:
-        self.listCurrentRemoteDir(includeFile=False)
-        src = input('what directory would you like to remove? ')
-        srcPath = self.getCurrentRemotePath() + FORWARD_SLASH + src
+        options = self.getCurrentRemoteDir()
+        options.append(QUIT)
+        index = self.ChooseMenu(options, "Removing remote directory")
+        choosen = options[index]
+        if choosen == QUIT:
+            return False
+        srcPath = self.getCurrentRemotePath() + FORWARD_SLASH + choosen
         return self.removeRemoteDirectory(srcPath)
     
     def removeRemoteDirectory(self, dirName: str) -> bool: 
@@ -235,15 +246,19 @@ class SFTPClient:
     def renameRemoteWrapper(self) -> bool: 
         """Rename the file or directory on a remote host (WRAPPER)
         """
-        self.listCurrentRemoteDir(includeFile=True)
-        self.listCurrentRemoteDir(includeFile=False)
-        src = input('what file or directory would you like to rename?')
-        dest = input('What would you like to rename to?')
-        srcPath = self.getCurrentRemotePath() + '/' + src
+        options = self.getCurrentRemoteDir()
+        options.append(RETURN)
+        index = self.ChooseMenu(options, "Renaming remote files and directory")
+        choosen = options[index]
+        if choosen == RETURN: return False
+        dest = input('What would you like to rename to?: ')
+        
+        srcPath = self.getCurrentRemotePath() + '/' + choosen
         destPath = self.getCurrentRemotePath() + '/' + dest
         self.renameRemote(srcPath, destPath)
         print('changing from: ' + srcPath + ' to ' + destPath)
         return True
+    
     
     def renameRemote(self, src, dest):
         """Rename the file or directory on a remote host
@@ -272,14 +287,24 @@ class SFTPClient:
 
         return True
     
-    def getCurrentRemoteDir(self) -> list:    
-        """Gets a list of contents in current remote directory
+    def getCurrentRemoteDir(self, include_files: bool = True) -> list:    
+        """Gets a list of current remote directory
 
-        :return: list of files/folder names
+        :param include_files: if True includes files else if False not include files, defaults to True
+        :type include_files: bool, optional
+        :return: list of current remote directory
         :rtype: list
-        """          
-        # return self.connection.listdir()
-        return self.connection.listdir()
+        """                 
+    
+        items = self.connection.listdir()
+        if include_files == True:
+            return items
+        else:
+            dir_items = list()
+            for item in items:
+                if self.connection.isdir(item):
+                    dir_items.append(item)
+            return dir_items
         pass
 
     def listCurrentRemoteDir(self, includeFile) -> None:
@@ -304,7 +329,8 @@ class SFTPClient:
         current_dir.append("..")
         current_dir.append(RETURN)
         current_path: str = self.connection.pwd
-        choosen_index = self.ChooseMenu(options=current_dir, title_name="Current path: " + current_path)
+        choosen_index = self.ChooseMenu(options=current_dir, title_name="Changing remote path, current path: " + current_path)
+
         choosen_dir: str = current_dir[choosen_index]
         
         if choosen_dir == RETURN:
@@ -313,13 +339,25 @@ class SFTPClient:
             self.connection.chdir(choosen_dir)
         pass
 
-    def getCurrentLocalDir(self) -> list:
-        """Gets a list of contents in current local directory
+    def getCurrentLocalDir(self, include_files: bool = True) -> list:
+        """Gets a list of contents in current local directory/files
 
-        :return: list of files/folder names
+        :param include_files: if True, files includes if False files not included, defaults to True
+        :type include_files: bool, optional
+        :return: A list current local directory
         :rtype: list
         """        
-        return os.listdir(self.local_path)
+        
+        items = os.listdir(self.local_path)  
+        if include_files == True:
+            return items
+        else:
+            dir_items = list()
+            for item in items:
+                full_path = os.path.join(self.local_path, item)
+                if os.path.isdir(full_path):
+                    dir_items.append(item)
+            return dir_items   
         pass
 
     def listCurrentLocalDir(self) -> None:
@@ -334,7 +372,7 @@ class SFTPClient:
     def changeCurrentLocalDir(self) -> None:
         """Changes local directory
         """
-        options = self.getCurrentLocalDir()
+        options = self.getCurrentLocalDir(include_files=False)
         options.append("..")
         options.append(RETURN)
         localPath = self.getCurrentLocalPath()
@@ -352,6 +390,40 @@ class SFTPClient:
             print('sorry not a directory')
 
         return
+        pass
+
+    def createRemoteDirectory(self) -> None:
+        """creates a remote directory
+        """        
+        print("Current remote directory: ", self.getCurrentRemotePath())
+        dir_name: str = input("Enter directory name you want to create: ")
+
+        try:
+            if dir_name in self.getCurrentRemoteDir():
+                print("The directory ", dir_name, " already exists on the remote server!")
+            else:
+                self.connection.mkdir(dir_name)
+                print("Directory '", dir_name, "' created successfully!")
+        except Exception as e:
+            print("Failed to create a directory!")
+
+        pass
+
+    def createLocalDirectory(self) -> None:
+        """Creates local directory
+        """        
+        print("Current local directory: ", self.getCurrentLocalPath())
+        dir_name: str = input("Enter directory name you want to create: ")
+
+        try:
+            if dir_name in self.getCurrentLocalDir(include_files=False):
+                print("The directory ", dir_name, " already exists on the local server!")
+            else:
+                os.mkdir(dir_name)
+                print("Directory '", dir_name, "' created successfully!")
+
+        except Exception as e:
+            print("Failed to create a directory!")
         pass
 
     def getCurrentRemotePath(self) -> str: 
@@ -411,6 +483,10 @@ class SFTPClient:
                 self.renameRemoteWrapper()
             elif entry == GET_FILE_REMOTE:
                 self.getRemoteWrapper()
+            elif entry == CREATE_DIR_REMOTE:
+                self.createRemoteDirectory()
+            elif entry == CREATE_DIR_LOCAL:
+                self.createLocalDirectory()
             elif entry == CURRENT_REMOTE_PATH:
                 print('Your current remote path is: ' + self.getCurrentRemotePath())
             elif entry == CURRENT_LOCAL_PATH:

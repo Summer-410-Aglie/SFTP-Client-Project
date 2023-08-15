@@ -20,3 +20,8 @@
 7. Type `code .` to open this in VSCode (you will have to download Microsoft's `WSL`
 	extension in VSCode for it to work)
 8. Delete your `.venv` folder and recreate the environment using the `requirements.txt`
+
+# Running python as executable
+You might need to change the end of line sequence for the file from CRLF (windows) to LF(Linux)
+1. chmod +x sftp.py
+2. ./sftp 

@@ -1,3 +1,4 @@
+#! /usr/bin/python3
 import sys
 from getpass import getpass
 from src.sftp_client import SFTPClient
