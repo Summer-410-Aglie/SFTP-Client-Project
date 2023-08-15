@@ -9,9 +9,12 @@ LIST_FILE_REMOTE: str =             'List remote files'
 LIST_DIR_LOCAL: str =               'List local directories'
 CHANGE_DIR_REMOTE: str =            'Change remote directories'
 CHANGE_DIR_LOCAL: str =             'Change local directories'
+REMOVE_LOCAL: str =                 'Remove local files or directories'
 REMOVE_DIR_REMOTE: str =            'Remove remote directories'
-RENAME_REMOTE: str =                'Rename file or directory'
+REMOVE_FILE_REMOTE: str =           'Remove remote files'
+RENAME_REMOTE: str =                'Rename remote file or directory'
 CURRENT_REMOTE_PATH: str =          'Output current remote path'
+CURRENT_LOCAL_PATH: str =           'Output current local path'
 EXIT: str =                         'Exit'
 QUIT: str =                         'Quit'
 RETURN: str =                       'Return'
@@ -22,9 +25,12 @@ OPTIONS: str = [
     CHANGE_DIR_REMOTE,
     LIST_DIR_LOCAL,
     CHANGE_DIR_LOCAL,
+    REMOVE_LOCAL,
     REMOVE_DIR_REMOTE,
+    REMOVE_FILE_REMOTE,
     RENAME_REMOTE,
     CURRENT_REMOTE_PATH,
+    CURRENT_LOCAL_PATH,
     EXIT
     ]
 
@@ -93,6 +99,22 @@ class SFTPClient:
     def get_many_remote_files(self, src: list[str], dest: str = None) -> None:
         pass
 
+    def removeLocalFileOrDir(self) -> bool:
+        current_dir = self.getCurrentLocalDir()
+        current_dir.append(RETURN)
+        choosen_index = self.ChooseMenu(options=current_dir, title_name="Current path: " + self.getCurrentLocalPath())
+        choosen_dir: str = current_dir[choosen_index]
+
+        if choosen_dir == RETURN:
+            return False
+        
+        fullPath = self.getCurrentLocalPath() + FORWARD_SLASH + choosen_dir
+
+        if os.path.isfile(fullPath):
+            return self.removeLocalFile(fullPath)
+        else:
+            return self.removeLocalDirectory(fullPath)
+                 
     def removeLocalFile(self, fileNamePath: str) -> bool:
         """Remove the local file
 
@@ -126,7 +148,7 @@ class SFTPClient:
         src = input('what file would you like to remove? ')
         srcPath = self.getCurrentRemotePath() + FORWARD_SLASH + src
         return self.removeRemoteFile(srcPath)
-    
+     
     def removeRemoteFile(self, fileName: str) -> bool: 
         """Remove the remote file
 
@@ -266,15 +288,19 @@ class SFTPClient:
         options = self.getCurrentLocalDir()
         options.append("..")
         options.append(RETURN)
-        choosen_index = self.ChooseMenu(options=options, title_name="Current Path: " + self.local_path)
+        localPath = self.getCurrentLocalPath()
+        choosen_index = self.ChooseMenu(options=options, title_name="Current Path: " + localPath)
         
         if options[choosen_index] == RETURN:
             return None
         
-        new_path = os.path.join(self.local_path, options[choosen_index])
+        new_path = os.path.join(localPath, options[choosen_index])
         
         if os.path.isdir(new_path):
-            self.local_path = new_path
+            self.local_path = new_path 
+            os.chdir(options[choosen_index]) 
+        else:
+            print('sorry not a directory')
 
         return
         pass
@@ -283,7 +309,11 @@ class SFTPClient:
         """Get current remote path
         """
         return self.connection.pwd
-
+        
+    def getCurrentLocalPath(self) -> str: 
+        """Get current local path
+        """
+        return os.getcwd()
 
     def ChooseMenu(self, options: list, title_name: str = "MENU") -> int:
         """Allows you to choose from list of options
@@ -322,12 +352,18 @@ class SFTPClient:
                 self.listCurrentLocalDir()
             elif entry == CHANGE_DIR_LOCAL:
                 self.changeCurrentLocalDir()
+            elif entry == REMOVE_LOCAL: 
+                self.removeLocalFileOrDir()
             elif entry == REMOVE_DIR_REMOTE:
                 self.removeRemoteDirectoryWrapper()
+            elif entry == REMOVE_FILE_REMOTE:
+                self.removeRemoteFileWrapper()
             elif entry == RENAME_REMOTE: 
                 self.renameRemoteWrapper()
             elif entry == CURRENT_REMOTE_PATH:
-                print('Your current remote path is:' + self.getCurrentRemotePath())
+                print('Your current remote path is: ' + self.getCurrentRemotePath())
+            elif entry == CURRENT_LOCAL_PATH:
+                print('Your current local path is: ' + self.getCurrentLocalPath())
             elif entry == EXIT:
                 return
                 pass
