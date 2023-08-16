@@ -461,6 +461,7 @@ class SFTPClient:
         menu_entries=options,
         title=title_name,
         )
+        print("\n\n")
         return terminal_menu.show()
         pass
 
