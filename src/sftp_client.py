@@ -14,7 +14,8 @@ REMOVE_DIR_REMOTE: str =            'Remove remote directories'
 REMOVE_FILE_REMOTE: str =           'Remove remote files'
 RENAME_REMOTE: str =                'Rename remote file or directory'
 RENAME_REMOTE: str =                'Rename file or directory'
-GET_FILE_REMOTE: str =				'Get remote file(s)'
+GET_FILE: str =						'Get remote file(s)'
+PUT_FILE: str =						'Put a file on remote'
 CREATE_DIR_REMOTE: str =            'Create remote directory'
 CREATE_DIR_LOCAL: str =             'Create local directory'
 CURRENT_PATH: str =                 'Output current path'
@@ -32,7 +33,8 @@ OPTIONS: str = [
     REMOVE_DIR_REMOTE,
     REMOVE_FILE_REMOTE,
     RENAME_REMOTE,
-    GET_FILE_REMOTE,
+    GET_FILE,
+    PUT_FILE,
     CREATE_DIR_REMOTE,
     CREATE_DIR_LOCAL,
     CURRENT_PATH,
@@ -102,62 +104,6 @@ class SFTPClient:
         srcPaths = [(self.getCurrentRemotePath() + FORWARD_SLASH + s) for s in srcs]
         
         return self.getManyRemoteFiles(srcPaths)
-    
-    # def getRemoteWrapper(self) -> bool:
-    #     remote_options = self.getCurrentRemoteDir()
- 
-    #     menu = TerminalMenu(
-    #         menu_entries=remote_options,
-    #         title="Get remote files (To pick files click space, once finished click Enter)",
-    #         multi_select=True
-    #     )
-    #     index_list = menu.show()
-    #     choosen_dirs = list()
-        
-    #     for i in index_list:
-    #         choosen_dirs.append(self.getCurrentRemotePath() + FORWARD_SLASH + remote_options[i])
-            
-    #     choosen_path = self.getLocalDir()
-    #     print(data)
-        
-    #     return self.getManyRemoteFiles(choosen_dirs, choosen_path)
-    #     pass    
-    
-    def getLocalDir(self, include_files: bool = True) -> str:        
-        current_path = self.getCurrentLocalPath()
-        while True:
-            options = list()
-            options.append('.')
-            options = self.getCurrentLocalDir(include_files=include_files)
-            options.append('..')
-            options.append(QUIT)
-            
-            localPath = self.getCurrentLocalPath()
-            menu = TerminalMenu(
-                menu_entries=options,
-                title="Current path: " + localPath + " (press space to navigate, to choose a folder press Enter)",
-                accept_keys=("enter", " ")
-            )
-            
-            index = menu.show()
-            choosen_option = options[index]
-            choosen_key = menu.chosen_accept_key
-            
-            if choosen_option == QUIT:
-                return None
-            
-            if choosen_key == "enter":
-                os.chdir(current_path)
-                return self.getCurrentLocalDir() + FORWARD_SLASH + choosen_option
-            pass
-            
-            new_path = os.path.join(localPath, choosen_option)
-            if os.path.isdir(new_path):
-                self.local_path = new_path 
-                os.chdir(new_path) 
-            
-        pass
-    
 
     def getRemoteFile(self, src: str, dest: str = None) -> bool:
         try:
@@ -208,11 +154,11 @@ class SFTPClient:
 
     def removeLocalFileOrDir(self) -> bool:
         current_dir = self.getCurrentLocalDir()
-        current_dir.append(QUIT)
+        current_dir.append(RETURN)
         choosen_index = self.ChooseMenu(options=current_dir, title_name="Current path: " + self.getCurrentLocalPath())
         choosen_dir: str = current_dir[choosen_index]
 
-        if choosen_dir == QUIT:
+        if choosen_dir == RETURN:
             return False
         
         fullPath = self.getCurrentLocalPath() + FORWARD_SLASH + choosen_dir
@@ -252,10 +198,10 @@ class SFTPClient:
     
     def removeRemoteFileWrapper(self) -> bool:
         options = self.getCurrentRemoteDir()
-        options.append(QUIT)
+        options.append(RETURN)
         index = self.ChooseMenu(options, "Removing remote file/directory")
         choosen = options[index]
-        if choosen == QUIT: return False
+        if choosen == RETURN: return False
         srcPath = self.getCurrentRemotePath() + FORWARD_SLASH + choosen
         return self.removeRemoteFile(srcPath)
      
@@ -301,10 +247,10 @@ class SFTPClient:
         """Rename the file or directory on a remote host (WRAPPER)
         """
         options = self.getCurrentRemoteDir()
-        options.append(QUIT)
+        options.append(RETURN)
         index = self.ChooseMenu(options, "Renaming remote files and directory")
         choosen = options[index]
-        if choosen == QUIT: return False
+        if choosen == RETURN: return False
         dest = input('What would you like to rename to?: ')
         
         srcPath = self.getCurrentRemotePath() + '/' + choosen
@@ -379,33 +325,18 @@ class SFTPClient:
     def changeCurrentRemoteDir(self) -> None:
         """Changes remote directory
         """   
-        
-        while True:
-            main_options = self.getCurrentRemoteDir()
-            main_options.append("..")
-            main_options.append(QUIT)
-            options = self.getCurrentRemoteDir()
-            options.append("..")
-            options.append(QUIT)
-            for i in range(len(options)):
-                if self.connection.isdir(options[i]):
-                    options[i] = options[i] + " - dir"
-            current_path: str = self.connection.pwd
-            
-            menu = TerminalMenu(
-                menu_entries=options,
-                title="Current path: " + self.getCurrentRemotePath() + " (Changing directory)"
-            )
-            
-            index = menu.show()
-            choosen_option = main_options[index]       
-            if choosen_option == QUIT:
-                return None
-            if self.connection.isdir(choosen_option):
-                self.connection.chdir(choosen_option)
-            
-            pass
+        current_dir = self.getCurrentRemoteDir()
+        current_dir.append("..")
+        current_dir.append(RETURN)
+        current_path: str = self.connection.pwd
+        choosen_index = self.ChooseMenu(options=current_dir, title_name="Changing remote path, current path: " + current_path)
 
+        choosen_dir: str = current_dir[choosen_index]
+        
+        if choosen_dir == RETURN:
+            return None
+        if self.connection.isdir(choosen_dir) or choosen_dir == "..":
+            self.connection.chdir(choosen_dir)
         pass
 
     def getCurrentLocalDir(self, include_files: bool = True) -> list:
@@ -416,7 +347,7 @@ class SFTPClient:
         :return: A list current local directory
         :rtype: list
         """        
-
+        
         items = os.listdir(self.local_path)  
         if include_files == True:
             return items
@@ -441,37 +372,24 @@ class SFTPClient:
     def changeCurrentLocalDir(self) -> None:
         """Changes local directory
         """
+        options = self.getCurrentLocalDir(include_files=False)
+        options.append("..")
+        options.append(RETURN)
+        localPath = self.getCurrentLocalPath()
+        choosen_index = self.ChooseMenu(options=options, title_name="Current Path: " + localPath)
         
-        while True:
-            main_options = self.getCurrentLocalDir(include_files=True)
-            main_options.append("..")
-            main_options.append(QUIT)
-            
-            temp_options = self.getCurrentLocalDir(include_files=True)
-            temp_options.append("..")
-            temp_options.append(QUIT)
-            for i in range(len(temp_options)):
-                full_path = self.getCurrentLocalPath() + FORWARD_SLASH + temp_options[i]
-                if os.path.isdir(full_path):
-                    temp_options[i] = temp_options[i] + " -dir"
-            
-            menu = TerminalMenu(
-                menu_entries=temp_options,
-                title="Current path: "+self.getCurrentLocalPath() + " (Changing local directory)"
-            )
-                   
-            index = menu.show()
-            choosen = main_options[index]
-            
-            if choosen == QUIT:
-                return
-            
-            new_path = self.getCurrentLocalPath() + FORWARD_SLASH + choosen
-            
-            if os.path.isdir(new_path):
-                os.chdir(new_path)
-            pass
+        if options[choosen_index] == RETURN:
+            return None
+        
+        new_path = os.path.join(localPath, options[choosen_index])
+        
+        if os.path.isdir(new_path):
+            self.local_path = new_path 
+            os.chdir(options[choosen_index]) 
+        else:
+            print('sorry not a directory')
 
+        return
         pass
 
     def createRemoteDirectory(self) -> None:
@@ -518,13 +436,18 @@ class SFTPClient:
         """
         return os.getcwd()
     
+    def putRemoteWrapper(self) -> bool:
+        self.listCurrentLocalDir()
+        src = input("Which file would you like to upload?: ")
+        return self.putRemote(src)
+
     def putRemote(self, fileName: str) -> bool:
         """Put file to remote Server
         """ 
         
-        current_dir = self.getCurrentRemoteDir()
+        current_dir = self.connection.getcwd()
         try:
-                self.connection.put(str,current_dir)
+                self.connection.put(fileName,current_dir)
         except Exception as e:
             print(str(e))
             return ValueError('Unable to upload file. ')
@@ -548,7 +471,7 @@ class SFTPClient:
         print("\n\n")
         return terminal_menu.show()
         pass
-    
+
     def mainMenu(self) -> None:
         """Menu for this class
         """        
@@ -577,8 +500,10 @@ class SFTPClient:
                 self.removeRemoteFileWrapper()
             elif entry == RENAME_REMOTE: 
                 self.renameRemoteWrapper()
-            elif entry == GET_FILE_REMOTE:
+            elif entry == GET_FILE:
                 self.getRemoteWrapper()
+            elif entry == PUT_FILE:
+                self.putRemoteWrapper()
             elif entry == CREATE_DIR_REMOTE:
                 self.createRemoteDirectory()
             elif entry == CREATE_DIR_LOCAL:
