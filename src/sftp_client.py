@@ -4,16 +4,14 @@ from simple_term_menu import TerminalMenu
 
 FORWARD_SLASH: str =                '/'
 
-LIST_DIR_REMOTE: str =              'List remote directories'
-LIST_FILE_REMOTE: str =             'List remote files'
+LIST_DIR_REMOTE: str =              'List remote files or directories'
 LIST_DIR_LOCAL: str =               'List local directories'
 CHANGE_DIR_REMOTE: str =            'Change remote directories'
 CHANGE_DIR_LOCAL: str =             'Change local directories'
 REMOVE_LOCAL: str =                 'Remove local files or directories'
-REMOVE_DIR_REMOTE: str =            'Remove remote directories'
-REMOVE_FILE_REMOTE: str =           'Remove remote files'
+REMOVE_REMOTE: str =                'Remove remote files or directories'
 RENAME_REMOTE: str =                'Rename remote file or directory'
-RENAME_REMOTE: str =                'Rename file or directory'
+RENAME_LOCAL: str =                 'Rename local files or directory'
 GET_FILE: str =						'Get remote file(s)'
 PUT_FILE: str =						'Put a file on remote'
 CREATE_DIR_REMOTE: str =            'Create remote directory'
@@ -25,14 +23,13 @@ RETURN: str =                       'Return'
 
 OPTIONS: str = [
     LIST_DIR_REMOTE,
-    LIST_FILE_REMOTE,
     CHANGE_DIR_REMOTE,
     LIST_DIR_LOCAL,
     CHANGE_DIR_LOCAL,
     REMOVE_LOCAL,
-    REMOVE_DIR_REMOTE,
-    REMOVE_FILE_REMOTE,
+    REMOVE_REMOTE,
     RENAME_REMOTE,
+    RENAME_LOCAL,
     GET_FILE,
     PUT_FILE,
     CREATE_DIR_REMOTE,
@@ -219,7 +216,7 @@ class SFTPClient:
 
         return True
 
-    def removeRemoteDirectoryWrapper(self) -> bool:
+    def removeRemoteFileOrDir(self) -> bool:
         options = self.getCurrentRemoteDir()
         options.append(QUIT)
         index = self.ChooseMenu(options, "Removing remote directory")
@@ -227,7 +224,11 @@ class SFTPClient:
         if choosen == QUIT:
             return False
         srcPath = self.getCurrentRemotePath() + FORWARD_SLASH + choosen
-        return self.removeRemoteDirectory(srcPath)
+
+        if self.connection.isfile(choosen):
+            return self.removeRemoteFile(choosen)
+        else: 
+            return self.removeRemoteDirectory(srcPath)
     
     def removeRemoteDirectory(self, dirName: str) -> bool: 
         """Remove the remote directory
@@ -273,7 +274,26 @@ class SFTPClient:
             return ValueError('Unable to rename file or directory: ' + src + ' to: ' + dest)
         
         return True
-      
+    
+    def renameLocalWrapper(self) -> bool:
+        """Rename the file or directory on a local host (WRAPPER)
+
+        :return: rename file or directory from local server
+        :rtype: bool
+        """
+        options = self.getCurrentLocalDir()
+        options.append(RETURN)
+        index = self.ChooseMenu(options, "Renaming local files and directory")
+        choosen = options[index]
+        if choosen == RETURN: return False
+        dest = input('What would you like to rename to?: ')
+
+        srcPath = self.getCurrentLocalPath() + '/' + choosen
+        destPath = self.getCurrentLocalPath() + '/' + dest
+        self.renameLocal(srcPath, destPath)
+        print('changing from: ' + srcPath + ' to ' + destPath)
+        return True
+
     def renameLocal(self, src, dest) -> bool:
         """Rename the file or directory on the local server
 
@@ -481,10 +501,13 @@ class SFTPClient:
             index: int = self.ChooseMenu(OPTIONS, "User Name: "+ self.user_name+" Host: "+ str(self.host_name))
             entry = OPTIONS[index]
             if entry == LIST_DIR_REMOTE:
+                print("----------Directories----------")
                 self.listCurrentRemoteDir(includeFile=False)
-                pass
-            elif entry == LIST_FILE_REMOTE:
+                print("-------------------------------\n")
+                print("-------------Files-------------")
                 self.listCurrentRemoteDir(includeFile=True)
+                print("-------------------------------")
+                pass
             elif entry == CHANGE_DIR_REMOTE:
                 self.changeCurrentRemoteDir()
                 pass
@@ -494,12 +517,12 @@ class SFTPClient:
                 self.changeCurrentLocalDir()
             elif entry == REMOVE_LOCAL: 
                 self.removeLocalFileOrDir()
-            elif entry == REMOVE_DIR_REMOTE:
-                self.removeRemoteDirectoryWrapper()
-            elif entry == REMOVE_FILE_REMOTE:
-                self.removeRemoteFileWrapper()
+            elif entry == REMOVE_REMOTE:
+                self.removeRemoteFileOrDir()
             elif entry == RENAME_REMOTE: 
                 self.renameRemoteWrapper()
+            elif entry == RENAME_LOCAL:
+                self.renameLocalWrapper()
             elif entry == GET_FILE:
                 self.getRemoteWrapper()
             elif entry == PUT_FILE:
